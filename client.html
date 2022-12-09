@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Document</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            html,
+            body {
+                height: 100%;
+                width: 100%;
+            }
+
+            body {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+            }
+        </style>
+    </head>
+    <body>
+        <script>
+            class Battleships {
+                constructor() {
+                    this.myBoard = this.initBoard();
+                    this.enemyBoard = this.initBoard();
+                    this.phase = null;
+                    this.room = null;
+                    this.name = null;
+                    this.enemyName = null;
+                    this.currentPlayer = null;
+                }
+
+                initBoard() {
+                    return Array.from(Array(10), () => new Array(10).fill(" "));
+                }
+
+                boardToString(board) {
+                    let s = "   0 1 2 3 4 5 6 7 8 9\n ";
+                    for (let x = 0; x < board.length; x++) {
+                        s += x + " ";
+                        for (let y = 0; y < board[x].length; y++) {
+                            s += board[x][y] + " ";
+                        }
+                        s += "\n ";
+                    }
+                    return s;
+                }
+
+                render() {
+                    document.querySelector("body").innerHTML = `
+                        <div>
+                            <h1>Battleships</h1>
+                            <p>Room: ${this.room}</p>
+                            <p>Phase: ${this.phase}</p>
+                            <p>Your name: ${this.name}</p>
+                            <p>Enemy name: ${this.enemyName}</p>
+                            <p>Current Player: ${this.currentPlayer}</p>
+                        </div>
+                    `;
+                    if (this.phase === "WAITING_FOR_PLAYERS") {
+                        return;
+                    }
+
+                    document.querySelector("body").innerHTML += `
+                        <div style="display: flex; flex-direction: row; gap: 3rem; margin: 5rem; text-align: center;">
+                            <div>
+                                <h3>My Board</h3>
+                                <pre>${this.boardToString(this.myBoard)}</pre>
+                            </div>
+                            <div>
+                                <h3>${this.enemyName}'s Board</h3>
+                                <pre>${this.boardToString(
+                                    this.enemyBoard
+                                )}</pre>
+                            </div>
+                        </div>
+                    `;
+                    if (this.phase === "SETUP") {
+                        document.querySelector("body").innerHTML += `
+                            <div>
+                                <h3>Place your ships</h3>
+                                <input id="x-input" type="number" placeholder="x" />
+                                <input id="y-input" type="number" placeholder="y" />
+                                <input id="length" type="number" placeholder="length" />
+                                <select id="direction">
+                                    <option value="HORIZONTAL">Horizontal</option>
+                                    <option value="VERTICAL">Vertical</option>
+                                </select>
+                                <button id="submit">Place</button>
+                            </div>
+                        `;
+
+                        document
+                            .querySelector("#submit")
+                            .addEventListener(
+                                "click",
+                                this.onPlaceSubmit.bind(this)
+                            );
+                    } else if (this.phase === "IN_PROGRESS") {
+                        document.querySelector("body").innerHTML += `
+                            <div>
+                                <h3>Shoot at your enemy</h3>
+                                <input id="x-input" type="number" placeholder="x" />
+                                <input id="y-input" type="number" placeholder="y" />
+                                <button id="submit">Shoot</button>
+                            </div>
+                        `;
+
+                        document
+                            .querySelector("#submit")
+                            .addEventListener(
+                                "click",
+                                this.onShootSubmit.bind(this)
+                            );
+                    }
+                }
+
+                onShootSubmit() {
+                    const x = document.querySelector("#x-input").value;
+                    const y = document.querySelector("#y-input").value;
+
+                    this.ws.send(
+                        JSON.stringify({
+                            type: "FIRE_SHOT",
+                            data: {
+                                x,
+                                y,
+                            },
+                        })
+                    );
+                }
+
+                onPlaceSubmit() {
+                    const x = document.querySelector("#x-input").value;
+                    const y = document.querySelector("#y-input").value;
+                    const length = document.querySelector("#length").value;
+                    const direction =
+                        document.querySelector("#direction").value;
+
+                    this.ws.send(
+                        JSON.stringify({
+                            type: "PLACE_SHIP",
+                            data: {
+                                x,
+                                y,
+                                length,
+                                direction,
+                            },
+                        })
+                    );
+                }
+
+                onMessage(event) {
+                    const data = JSON.parse(event.data);
+                    console.log(data);
+
+                    if (data.error) {
+                        alert(data.error);
+                        return;
+                    }
+
+                    if (data.type === "GAME_PHASE_CHANGED") {
+                        this.phase = data.data.phase;
+                        if (this.phase === "SETUP") {
+                            this.enemyName = data.data.extra.enemy;
+                            // prettier-ignore
+                            // setTimeout(() => {
+                            //     this.ws.send(JSON.stringify({type: "PLACE_SHIP",data: {x: 0, y: 0, length: 5, direction: "HORIZONTAL"}}));
+                            //     this.ws.send(JSON.stringify({type: "PLACE_SHIP",data: {x: 0, y: 2, length: 4, direction: "HORIZONTAL"}}));
+                            //     this.ws.send(JSON.stringify({type: "PLACE_SHIP",data: {x: 0, y: 4, length: 4, direction: "HORIZONTAL"}}));
+                            //     this.ws.send(JSON.stringify({type: "PLACE_SHIP",data: {x: 0, y: 6, length: 3, direction: "HORIZONTAL"}}));
+                            //     this.ws.send(JSON.stringify({type: "PLACE_SHIP",data: {x: 0, y: 8, length: 3, direction: "HORIZONTAL"}}));
+                            //     this.ws.send(JSON.stringify({type: "PLACE_SHIP",data: {x: 7, y: 0, length: 3, direction: "HORIZONTAL"}}));
+                            //     this.ws.send(JSON.stringify({type: "PLACE_SHIP",data: {x: 7, y: 2, length: 2, direction: "HORIZONTAL"}}));
+                            //     this.ws.send(JSON.stringify({type: "PLACE_SHIP",data: {x: 7, y: 4, length: 2, direction: "HORIZONTAL"}}));
+                            //     this.ws.send(JSON.stringify({type: "PLACE_SHIP",data: {x: 7, y: 6, length: 2, direction: "HORIZONTAL"}}));
+                            //     this.ws.send(JSON.stringify({type: "PLACE_SHIP",data: {x: 7, y: 8, length: 2, direction: "HORIZONTAL"}}));
+                            // }, 2000)
+                        }
+                    } else if (data.type === "PLAYER_CHANGED") {
+                        this.currentPlayer = data.data.name;
+                    } else if (data.type === "SHIP_PLACED") {
+                        this.onShipPlaced(data.data);
+                    } else if (data.type === "SHOT_FIRED") {
+                        this.onShotFired(data.data);
+                    }
+
+                    this.render();
+                }
+
+                onShipPlaced(data) {
+                    const { x, y, length, direction } = data;
+
+                    if (direction === "HORIZONTAL") {
+                        for (let i = 0; i < length; i++) {
+                            this.myBoard[y][x + i] = "B";
+                        }
+                    } else {
+                        for (let i = 0; i < length; i++) {
+                            this.myBoard[y + i][x] = "B";
+                        }
+                    }
+
+                    this.render();
+                }
+
+                onShotFired(data) {
+                    const board =
+                        data.player == this.name
+                            ? this.enemyBoard
+                            : this.myBoard;
+                    if (data.result === "SUNK") {
+                        for (const coord of data.shipCoordinates) {
+                            board[coord[1]][coord[0]] = "S";
+                        }
+                    } else {
+                        board[data.y][data.x] =
+                            data.result === "HIT" ? "H" : "M";
+                    }
+                }
+
+                onClose() {
+                    console.log("connection closed");
+                    alert("connection closed");
+                    document.querySelector("body").innerHTML = `
+                        <h1>Connection closed</h1>
+                    `;
+                }
+
+                play(room, name) {
+                    this.name = name;
+                    this.room = room;
+
+                    this.ws = new WebSocket(
+                        "ws://localhost:8080?room=" + room + "&name=" + name
+                    );
+
+                    this.ws.onopen = this.render.bind(this);
+                    this.ws.onmessage = this.onMessage.bind(this);
+                    this.ws.onclose = this.onClose.bind(this);
+                }
+
+                start() {
+                    document.querySelector("body").innerHTML = `
+                        <input id="room-input" type="text" placeholder="room" />
+                        <input id="name-input" type="text" placeholder="name" />
+                        <button id="submit">Join</button>
+                    `;
+
+                    document
+                        .querySelector("#submit")
+                        .addEventListener("click", () => {
+                            const room =
+                                document.querySelector("#room-input").value;
+                            const name =
+                                document.querySelector("#name-input").value;
+                            this.play(room, name);
+                        });
+                }
+            }
+
+            const game = new Battleships();
+            game.start();
+        </script>
+    </body>
+</html>
