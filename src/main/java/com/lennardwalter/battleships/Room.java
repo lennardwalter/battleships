@@ -32,11 +32,11 @@ public class Room {
         try {
             Request request = mapper.readValue(message, Request.class);
             switch (request.getType()) {
-                case "PLACE_SHIP":
+                case PLACE_SHIP:
                     Request.PlaceShip placeRequest = mapper.convertValue(request.getData(), Request.PlaceShip.class);
                     this.onPlace(placeRequest, player);
                     break;
-                case "FIRE_SHOT":
+                case FIRE_SHOT:
                     Request.FireShot shootRequest = mapper.convertValue(request.getData(), Request.FireShot.class);
                     this.onShoot(shootRequest, player);
                     break;

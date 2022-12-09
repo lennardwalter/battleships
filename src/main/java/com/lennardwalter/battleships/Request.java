@@ -4,6 +4,10 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Request {
+    public static enum Type {
+        PLACE_SHIP,
+        FIRE_SHOT
+    }
 
     public static class FireShot {
         private int x;
@@ -32,7 +36,7 @@ public class Request {
 
         @JsonCreator
         public PlaceShip(@JsonProperty("length") int length, @JsonProperty("x") int x, @JsonProperty("y") int y,
-                @JsonProperty("direction") Direction direction) throws GameException {
+                @JsonProperty("direction") Direction direction) {
             this.length = length;
             this.x = x;
             this.y = y;
@@ -57,11 +61,11 @@ public class Request {
 
     }
 
-    private String type;
+    private Type type;
     private Object data;
 
     @JsonCreator
-    public Request(@JsonProperty("type") String type, @JsonProperty("data") Object data) throws GameException {
+    public Request(@JsonProperty("type") Type type, @JsonProperty("data") Object data) throws GameException {
         if (type == null || data == null) {
             throw new GameException(GameException.Code.INVALID_REQUEST);
         }
@@ -69,7 +73,7 @@ public class Request {
         this.data = data;
     }
 
-    public String getType() {
+    public Type getType() {
         return type;
     }
 

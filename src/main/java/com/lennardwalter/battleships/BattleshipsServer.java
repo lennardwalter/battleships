@@ -68,10 +68,8 @@ public class BattleshipsServer extends WebSocketServer {
         Room room = this.connectionToRoom.get(conn);
         room.removePlayer(conn);
         this.connectionToRoom.remove(conn);
-        System.out.println("Player left room " + room.getId());
         if (room.isEmpty()) {
             this.roomIdToRoom.remove(room.getId());
-            System.out.println("Room " + room.getId() + " is empty and has been removed");
         }
     }
 
@@ -93,10 +91,6 @@ public class BattleshipsServer extends WebSocketServer {
     @Override
     public void onError(WebSocket conn, Exception ex) {
         ex.printStackTrace();
-        if (conn != null) {
-            // some errors like port binding failed may not be assignable to a specific
-            // websocket
-        }
     }
 
     @Override

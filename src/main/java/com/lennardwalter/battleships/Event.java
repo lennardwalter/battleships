@@ -189,10 +189,10 @@ public class Event {
     }
 
     @JsonProperty
-    private Object data;
+    private Type type;
 
     @JsonProperty
-    private Type type;
+    private Object data;
 
     public Event(Type type, Object data) {
         this.type = type;
