@@ -54,7 +54,7 @@ public class Game {
     protected void notifyShotFired(FireshotResult result, int x, int y) {
         List<int[]> shipCoords = null;
         if (result == FireshotResult.SUNK) {
-            Ship ship = this.currentPlayer.getArea().getCells().get(y).get(x).getShip();
+            Ship ship = this.getNotCurrentPlayer().getArea().getCells().get(y).get(x).getShip();
             shipCoords = ship.getCells().stream().map(c -> new int[] { c.getX(), c.getY() }).toList();
         }
 
@@ -65,7 +65,7 @@ public class Game {
         if (result == FireshotResult.MISS) {
             this.switchPlayer();
         } else if (result == FireshotResult.SUNK) {
-            if (this.currentPlayer.getArea().getShips().stream().allMatch(s -> s.isSunk())) {
+            if (this.getNotCurrentPlayer().getArea().getShips().stream().allMatch(s -> s.isSunk())) {
                 this.setPhase(GamePhase.GAME_OVER, new Event.GamePhaseChange.GameOver(
                         Event.GamePhaseChange.GameOver.Reason.PLAYER_WON, this.currentPlayer.getName()));
             }
@@ -87,6 +87,14 @@ public class Game {
 
     public Player getCurrentPlayer() {
         return this.currentPlayer;
+    }
+
+    public Player getNotCurrentPlayer() {
+        if (this.currentPlayer == this.players.get(0)) {
+            return this.players.get(1);
+        } else {
+            return this.players.get(0);
+        }
     }
 
     private void switchPlayer() {
